@@ -1,0 +1,17 @@
+corpus_version: "0.1.0"
+created: "2026-04-17"
+
+items:
+  - id: "example-repo"
+    type: "repository"
+    path: "repos/example"
+    description: "Example repo for testing"
+    tags: ["example", "test"]
+    source: "local"
+
+  - id: "example-adr"
+    type: "adr"
+    path: "docs/adrs/001-example.md"
+    description: "Example ADR"
+    tags: ["example"]
+    source: "local"

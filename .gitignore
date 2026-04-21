@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Experiment outputs
+logs/*.md
+results/*.csv
+results/*.json
+
+# Mounted homelab paths
+/mnt/homelab/
+
+# Model cache
+.cache/
+*.h5
+*.onnx
+
+# Temp
+tmp/
+temp/
+*.tmp

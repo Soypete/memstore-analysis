@@ -1,0 +1,12 @@
+{
+  "plugin": [
+    ".opencode/plugins/graphify.js"
+  ],
+  "permission": {
+    "skill": {
+      "graphify": "allow",
+      "llmwiki": "allow",
+      "mempalace": "allow"
+    }
+  }
+}

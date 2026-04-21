@@ -1,0 +1,57 @@
+# Storage Configuration
+# Defines how to access homelab storage
+
+storage:
+  # SeaweedFS S3 (for objects: graphs, transcripts)
+  s3:
+    endpoint: "http://referb:8333"
+    bucket: "experiments"
+    access_key: "${SEAWEED_ACCESS_KEY}"
+    secret_key: "${SEAWEED_SECRET_KEY}"
+
+  # Longhorn (for databases: SQLite, ChromaDB)
+  longhorn:
+    pvc_name: "experiments-db"
+    namespace: "experiments"
+    mount_path: "/mnt/homelab/db"
+
+  # Corpus (shared across all systems)
+  corpus:
+    path: "/mnt/homelab/corpus"
+    # Symlink or mount to experiments/corpus/repos
+
+  # Local cache (for development)
+  local_cache:
+    path: "~/.cache/experiments"
+    max_size_mb: 5000
+
+
+# Mount scripts for different platforms
+mount:
+  macos:
+    # Option 1: SSHFS (quick dev)
+    command: "sshfs referb:/opt/experiments /mnt/homelab"
+
+    # Option 2: S3FS (for SeaweedFS)
+    # command: "s3fs experiments /mnt/homelab -o endpoint=referb:8333"
+
+  linux:
+    command: "sshfs referb:/opt/experiments /mnt/homelab"
+
+  # Or use NFS if configured
+
+
+# Kubernetes PVC definitions (apply with kubectl)
+kubernetes:
+  pvc_definitions:
+    - name: experiments-corpus
+      size: 100Gi
+      access: ReadWriteMany
+
+    - name: experiments-db
+      size: 20Gi
+      access: ReadWriteOnce
+
+    - name: experiments-models
+      size: 50Gi
+      access: ReadWriteOnce

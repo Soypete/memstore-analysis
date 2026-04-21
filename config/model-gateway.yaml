@@ -1,0 +1,43 @@
+# Model Gateway Configuration
+# All systems use this shared inference endpoint
+
+model_gateway:
+  # Primary: pedrogpt-hosted llama.cpp (Tailscale)
+  base_url: "http://pedrogpt:8080/v1"
+  api_key: "EMPTY"
+  default_model: "qwen3-coder-30b"
+
+  # Fallback: TBD (reserved for future llama.cpp instance)
+  fallback_url: "http://localhost:8080/v1"
+  fallback_api_key: "EMPTY"
+  fallback_model: "llama.cpp model"
+
+  # Embedding model (for MemPalace + Phase B)
+  embedding_model: "bge-m3"
+
+  # Request settings
+  timeout: 120
+  max_retries: 3
+
+
+# Tailscale hosts
+tailscale_hosts:
+  pedrogtp:
+    ip: "100.87.122.109"
+    port: 8080
+    type: "llama.cpp"
+    models: "llama-*-chat"
+
+  spark:
+    # Kubernetes service or hostname
+    # Use: kubectl get svc -n <namespace> to find
+    type: "vllm"
+    port: 8000
+
+
+# OpenAI-compatible client settings
+openai_client:
+  timeout: 120
+  max_retries: 3
+  default_headers:
+    "X-Experiment": "kg-comparison-v1"

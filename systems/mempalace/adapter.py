@@ -207,7 +207,7 @@ class MemPalaceAdapter:
 
         Uses mempalace CLI internally.
         """
-        from mempalace.mempalace.miner import mine as _mine
+        from mempalace.miner import mine as _mine
 
         return _mine(str(project_path), str(self.palace_path))
 

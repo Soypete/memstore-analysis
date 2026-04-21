@@ -233,11 +233,12 @@ To stop: Ctrl+C in the OpenCode session.
 - **Watch mode**: Working - auto-rebuilds on file changes (3s debounce)
 - **Note**: Only indexes code files (.py, .js, .ts, .go, .rs) - not "semantic" in LLM sense
 
-### ❌ MemPalace - Not Working
+### ✅ MemPalace - Working
 - **What it does**: Vector embeddings + hierarchical organization (Wing/Room/Drawer)
 - **Storage**: `~/.mempalace/` (ChromaDB)
-- **Watch mode**: Watcher runs but is silent - not capturing changes
-- **Existing data**: Old data from April 17
+- **Watch mode**: Working - detects file changes, runs mining
+- **Setup required**: Run `mempalace init .` and `mempalace mine .` first
+- **Current data**: 54 files processed, 311 drawers
 
 ### Scripts
 - `./start_exp.sh` - Start all three watchers (watches `pedro-bots`)
@@ -255,14 +256,12 @@ To stop: Ctrl+C in the OpenCode session.
 
 ## Known Issues
 
-1. **Graphify watch not triggering**: File changes don't trigger rebuild
-2. **MemPalace watcher silent**: No output when files change
+1. **MemPalace requires init first**: Must run `mempalace init .` before watch will mine files
 
 ---
 
 ## Next Steps
 
-1. Debug Graphify watch mode
-2. Debug MemPalace watch mode
-3. Run benchmark queries against all three
-4. Compare results
+1. Run benchmark queries against all three
+2. Compare results - relevance, latency, coverage
+3. Document findings

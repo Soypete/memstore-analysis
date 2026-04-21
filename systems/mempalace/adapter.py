@@ -271,16 +271,35 @@ class MemPalaceWatcher:
                     return
                 w_self._handle(Path(event.src_path), "modified")
 
-            def _handle(w_self, path: Path, event_type: str):
+def _handle(w_self, path: Path, event_type: str):
                 if path.suffix not in {'.py', '.js', '.ts', '.go', '.rs', '.md', '.txt'}:
                     return
+                
+                # Skip if in wiki path (LLMWiki output)
+                path_str = str(path)
+                if '/wiki/' in path_str or '/.mempalace/' in path_str or '/graphify-out/' in path_str:
+                    return
+                
                 if event_type == "created" and str(path) in w_self.watcher._seen:
                     return
                 w_self.watcher._seen.add(str(path))
 
                 print(f"MemPalace: {event_type} {path.name}", flush=True)
                 try:
-                    w_self.watcher.adapter.mine_project(path.parent)
+                    from mempalace.semantic_index import semantic_hash, SemanticIndex
+                    
+                    shash = semantic_hash(path.stem, "file", path.suffix.lstrip("."))
+                    
+                    parts = path.parts
+                    wing = parts[-3] if len(parts) >= 3 else "files"
+                    room = path.parent.name if path.parent.name != "src" else "code"
+                    
+                    db_path = w_self.watcher.adapter.palace_path / "knowledge_graph.sqlite3"
+                    si = SemanticIndex(str(db_path))
+                    si.register(str(path), wing, room)
+                    
+                    print(f"  -> {wing}/{room} (hash: {shash})", flush=True)
+                    
                     if w_self.watcher.on_change:
                         w_self.watcher.on_change(path, event_type)
                 except Exception as e:

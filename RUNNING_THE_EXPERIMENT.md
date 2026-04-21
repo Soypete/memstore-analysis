@@ -234,11 +234,11 @@ To stop: Ctrl+C in the OpenCode session.
 - **Note**: Only indexes code files (.py, .js, .ts, .go, .rs) - not "semantic" in LLM sense
 
 ### ✅ MemPalace - Working
-- **What it does**: Vector embeddings + hierarchical organization (Wing/Room/Drawer)
-- **Storage**: `~/.mempalace/` (ChromaDB)
-- **Watch mode**: Working - detects file changes, runs mining
-- **Setup required**: Run `mempalace init .` and `mempalace mine .` first
-- **Current data**: 54 files processed, 311 drawers
+- **What it does**: Semantic hash routing (no vectors needed)
+- **Storage**: `~/.mempalace/palace/knowledge_graph.sqlite3`
+- **Watch mode**: Working - generates deterministic hash from file path → wing/room
+- **Approach**: Hash-based routing (like Graphify), not vector search
+- **Excludes**: /wiki/, /.mempalace/, /graphify-out/
 
 ### Scripts
 - `./start_exp.sh` - Start all three watchers (watches `pedro-bots`)

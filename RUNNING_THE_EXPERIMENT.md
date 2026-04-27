@@ -216,6 +216,63 @@ To stop: Ctrl+C in the OpenCode session.
 
 ---
 
+## OpenCode Skills
+
+You can now query the memory systems directly from OpenCode:
+
+```
+/graphify executor
+/llmwiki authentication
+/mempalace database
+
+# Stats
+/graphify --stats
+/llmwiki --stats
+/mempalace --stats
+
+# Query all systems at once
+/query-mem "executor" --runs 3
+```
+
+### Skill Files
+- `/Users/soypete/code/opensource/experiments/skills/graphify.py`
+- `/Users/soypete/code/opensource/experiments/skills/llmwiki.py`
+- `/Users/soypete/code/opensource/experiments/skills/mempalace.py`
+
+---
+
+## CLI Benchmark Tool
+
+### Query All Systems
+
+```bash
+cd /Users/soypete/code/opensource
+python experiments/query_systems.py "executor" --runs 5
+python experiments/query_systems.py "authentication" --system all
+python experiments/query_systems.py --stats
+```
+
+### Options
+- `query` - Search term (default: "executor")
+- `--runs N` - Number of benchmark runs (default: 5)
+- `--system [graphify|llmwiki|mempalace|all]` - Which system to query
+- `--stats` - Show system statistics
+
+### Examples
+
+```bash
+# Query all systems with same term
+python experiments/query_systems.py "database" --runs 3
+
+# Stats only
+python experiments/query_systems.py --stats
+
+# Single system
+python experiments/query_systems.py "auth" --system mempalace
+```
+
+---
+
 ## Current Status (2026-04-21)
 
 ### ✅ LLMWiki - Working

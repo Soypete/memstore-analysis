@@ -14,7 +14,7 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM
 
-CORPUS_PATH="${1:-$HOME/code/pedro/pedro-bots}"
+CORPUS_PATH="${1:-$HOME/code}"
 EXPERIMENTS_PATH="$(cd "$(dirname "$0")" && pwd)"
 PARENT_PATH="$(dirname "$EXPERIMENTS_PATH")"
 WIKI_PATH="$CORPUS_PATH/wiki"

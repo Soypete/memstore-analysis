@@ -59,51 +59,45 @@ class MemPalaceAdapter:
         """
         Search using MemPalace's semantic routing.
 
-        Uses:
-        - SPO hashing for exact matches
-        - ChromaDB for vector similarity
-        - SQLite for metadata filtering
+        Uses SQLite semantic_index table with LIKE search.
         """
-        try:
-            col = self._get_collection()
-        except Exception:
+        import sqlite3
+        
+        db_path = self.palace_path / "knowledge_graph.sqlite3"
+        if not db_path.exists():
             return []
-
-        where = {}
-        if scope != "all":
-            if scope == "wing":
-                where = {"wing": {"$exists": True}}
-            elif scope == "room":
-                where = {"room": {"$exists": True}}
-
+        
+        query_lower = query.lower()
+        
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
         try:
-            results = col.query(
-                query_texts=[query],
-                n_results=top_k,
-                where=where if where else None,
-                include=["documents", "metadatas", "distances"],
-            )
+            cursor.execute("""
+                SELECT * FROM semantic_index 
+                WHERE entity_path LIKE ? OR wing LIKE ? OR room LIKE ?
+                LIMIT ?
+            """, (f"%{query_lower}%", f"%{query_lower}%", f"%{query_lower}%", top_k))
+            rows = cursor.fetchall()
         except Exception:
+            conn.close()
             return []
-
+        
         memory_results = []
-        for doc, meta, dist in zip(
-            results.get("documents", [[]])[0],
-            results.get("metadatas", [[]])[0],
-            results.get("distances", [[]])[0],
-        ):
+        for row in rows:
+            created = row["created_at"] if row["created_at"] else datetime.now().isoformat()
             memory_results.append(
                 MemoryResult(
-                    id=meta.get("source_file", "unknown"),
-                    content=doc,
-                    score=round(1 - dist, 3),
-                    source=meta.get("source_file", "unknown"),
-                    created_at=datetime.fromisoformat(
-                        meta.get("created_at", datetime.now().isoformat())
-                    ),
+                    id=row["semantic_hash"],
+                    content=row["entity_path"],
+                    score=row["confidence"],
+                    source=row["entity_path"],
+                    created_at=datetime.fromisoformat(created),
                 )
             )
-
+        
+        conn.close()
         return memory_results
 
     def read_memory(self, id: str) -> Optional[MemoryItem]:
@@ -174,31 +168,41 @@ class MemPalaceAdapter:
         return False
 
     def get_stats(self) -> SystemStats:
-        """Get palace statistics from ChromaDB."""
+        """Get palace statistics from SQLite semantic_index."""
+        import sqlite3
+        
+        db_path = self.palace_path / "knowledge_graph.sqlite3"
+        if not db_path.exists():
+            return SystemStats(
+                total_items=0, total_links=0, wings=0, rooms=0, drawers=0, storage_size_bytes=0
+            )
+        
         try:
-            col = self._get_collection()
-            count = col.count()
-
-            metas = col.get(include=["metadatas"])["metadatas"]
-            wings = set(m.get("wing") for m in metas if m.get("wing"))
-            rooms = set(m.get("room") for m in metas if m.get("room"))
-
+            conn = sqlite3.connect(str(db_path))
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT COUNT(*) FROM semantic_index")
+            count = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT DISTINCT wing FROM semantic_index")
+            wings = {row[0] for row in cursor.fetchall()}
+            
+            cursor.execute("SELECT DISTINCT room FROM semantic_index")
+            rooms = {row[0] for row in cursor.fetchall()}
+            
+            conn.close()
+            
             return SystemStats(
                 total_items=count,
                 total_links=0,
                 wings=len(wings),
                 rooms=len(rooms),
                 drawers=count,
-                storage_size_bytes=0,
+                storage_size_bytes=db_path.stat().st_size,
             )
         except Exception:
             return SystemStats(
-                total_items=0,
-                total_links=0,
-                wings=0,
-                rooms=0,
-                drawers=0,
-                storage_size_bytes=0,
+                total_items=0, total_links=0, wings=0, rooms=0, drawers=0, storage_size_bytes=0
             )
 
     def mine_project(self, project_path: Path) -> dict:
@@ -271,7 +275,7 @@ class MemPalaceWatcher:
                     return
                 w_self._handle(Path(event.src_path), "modified")
 
-def _handle(w_self, path: Path, event_type: str):
+            def _handle(w_self, path: Path, event_type: str):
                 if path.suffix not in {'.py', '.js', '.ts', '.go', '.rs', '.md', '.txt'}:
                     return
                 

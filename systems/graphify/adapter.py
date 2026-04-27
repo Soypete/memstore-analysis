@@ -34,11 +34,22 @@ class GraphifyAdapter:
         Initialize Graphify adapter.
 
         Args:
-            graph_path: Path to graph.json
+            graph_path: Path to graph.json or directory containing graphify-out/
             corpus_path: Path to source corpus
         """
-        self.graph_path = graph_path
-        self.corpus_path = corpus_path
+        self.corpus_path = corpus_path or graph_path
+        
+        # If given a directory, look for graphify-out/graph.json
+        if graph_path.is_dir():
+            graphify_out = graph_path / "graphify-out" / "graph.json"
+            if graphify_out.exists():
+                self.graph_path = graphify_out
+            else:
+                # Fallback to graph.json in the directory
+                self.graph_path = graph_path / "graph.json"
+        else:
+            self.graph_path = graph_path
+        
         self._graph_data: Optional[dict] = None
 
     def _load_graph(self) -> dict:
@@ -71,7 +82,13 @@ class GraphifyAdapter:
         - DFS traversal
         - Token budget limiting
         """
-        graph_json = self.graph_path.parent / "graph.json"
+        if self.graph_path.is_dir():
+            graph_json = self.graph_path / "graphify-out" / "graph.json"
+            if not graph_json.exists():
+                graph_json = self.graph_path / "graph.json"
+        else:
+            graph_json = self.graph_path
+            
         if not graph_json.exists():
             return []
 

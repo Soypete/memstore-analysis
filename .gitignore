@@ -22,9 +22,10 @@ build/
 Thumbs.db
 
 # Experiment outputs
-logs/*.md
-results/*.csv
-results/*.json
+logs/
+results/
+*.csv
+*.json
 
 # Mounted homelab paths
 /mnt/homelab/

@@ -14,6 +14,8 @@ Living lab notebook for testing: **Do Semantic Models Turn File-Based Systems in
 | [logs/](./logs/) | Experiment log entries |
 | [results/](./results/) | Collected metrics |
 
+OpenCode skills for these systems (`/graphify`, `/llmwiki`, `/mempalace`) live in [soypete/dotfiles → opencode/skills](https://github.com/soypete/dotfiles/tree/main/opencode/skills). See [HOW_TO_WRITE_SKILLS.md](https://github.com/soypete/dotfiles/blob/main/opencode/skills/HOW_TO_WRITE_SKILLS.md) for adding your own.
+
 ---
 
 ## Systems Under Test

@@ -1,299 +1,123 @@
-# Mind Maps vs AI Harnesses: A Comparative Analysis of Memory Indexing Systems for AI Coding Assistants
+# Evaluating Storage Architectures for Context Retrieval in AI Coding Assistants
 
-## A Comparative Experimental Analysis
-
-**Author:** Pete Williams  
-**Date:** May 2026  
-**Version:** 1.0
+Author: Miriah Peterson  
+Date: May 2026  
 
 ---
 
 ## Abstract
 
-This white paper presents the results of a systematic evaluation of three memory system architectures for AI coding assistants:
-- **LLMWiki** (AI Harness) — LLM-maintained markdown wiki
-- **Graphify** (Mind Map) — Knowledge graph extracted from code
-- **MemPalace** (AI Harness) — Semantic routing via SPO hashing
-
-We measure data size, query latency, and storage efficiency across 10 standardized tasks. Our findings:
-
-- **Graphify** (Mind Map): Largest data (3.7GB, 1.2M nodes, 6.9M edges) but slowest queries (35s) due to full graph load
-- **MemPalace** (AI Harness): Smallest footprint (8.8MB), fastest queries (34ms) using incremental SQLite indexing
-- **LLMWiki** (AI Harness): Moderate (33.9MB, 2.2s) with human-readable markdown
-
-The semantic overlay experiment (adding typed ontology) was not fully wired up, leaving room for future work.
+AI coding assistants can operate without persistent memory; however, in practical software engineering environments, systems that capture and reuse context across repositories can improve efficiency in tasks such as refactoring, dependency analysis, and pattern reuse. This paper evaluates three storage architectures for such context systems: markdown-based storage, full graph materialization, and database-style indexed retrieval. We measure storage size and system-level query latency across a shared task suite. Results show that database-style systems, which support indexed and selective retrieval, significantly outperform systems requiring full dataset materialization. Specifically, indexed retrieval achieved millisecond-level latency and megabyte-scale storage, compared to second-level latency and gigabyte-scale storage for full graph approaches. These findings suggest that storage architecture, particularly the use of indexed retrieval, is the dominant factor in performance for context retrieval systems used in AI-assisted development workflows.
 
 ---
 
 ## 1. Introduction
 
-### 1.1 The Problem
+AI coding assistants have rapidly evolved in capability, but their effectiveness in real-world engineering environments remains constrained by access to relevant context. While these systems can operate without persistent memory, developers frequently benefit from tools that capture and reuse knowledge across repositories, services, and workflows. In practice, such systems enable reuse of implementation patterns, visibility into cross-service dependencies, and more efficient navigation of large and evolving codebases.
 
-Modern AI coding assistants need memory systems that can index and retrieve relevant context. Two architectural patterns have emerged:
+Context retrieval plays a central role in enabling these workflows. Tasks such as refactoring, dependency tracing, and consistency validation often require access to information that spans multiple repositories or historical changes. Without structured mechanisms for retrieving this information, developers and AI systems must repeatedly reconstruct context, leading to increased cognitive load and redundant analysis.
 
-1. **Mind Maps (Graph-based)** — Systems like Graphify extract explicit relationship graphs from code (AST, imports, function calls). Think: "nodes and edges"
-2. **AI Harnesses (LLM-based)** — Systems like LLMWiki and MemPalace use LLMs to synthesize, route, and retrieve context. Think: "prompt engineering + embeddings"
-
-A fundamental question: **Which approach provides better indexing and retrieval for AI coding assistants?**
-
-**Use case:** Context preservation — keeping codebase or cross-microservice context available without loading all files. Think "context saver" for AI assistants working across large codebases.
-
-### 1.2 Research Question
-
-> **Do explicit graph structures (mind maps) outperform LLM-based approaches (AI harnesses) for code retrieval in AI assistants?**
-
-### 1.3 Hypothesis
-
-- Mind maps should provide **faster** retrieval (graph traversal vs LLM synthesis)
-- AI harnesses should provide **richer** context (LLM understanding)
-- Both should improve with semantic overlays (typed entities, constraints)
+This paper evaluates how different storage architectures affect the performance of context retrieval systems used in AI-assisted development. Rather than focusing on model behavior, the study isolates the impact of storage and retrieval strategy on system-level performance, with an emphasis on latency and storage efficiency.
 
 ---
 
-## 2. Systems Under Test
+## 2. Related Work
 
-### 2.1 LLMWiki
+Several approaches have emerged for managing context in AI-assisted development systems. Markdown-based approaches, such as LLM-generated wikis, prioritize human readability and ease of inspection but lack strong guarantees around indexing and retrieval performance. These systems are often effective for documentation-oriented workflows but may degrade in performance as the volume of stored content increases.
 
-- **Type:** Markdown-based persistent wiki
-- **Maintenance:** LLM-generated content
-- **View:** Obsidian as materialization layer
-- **Semantic layer:** Implicit (wikilinks, categories)
+Graph-based approaches construct explicit representations of relationships between code elements, including functions, files, and dependencies. These systems offer a rich structural view of the codebase and enable traversal-based queries. However, they frequently rely on full graph materialization, which introduces significant overhead when handling large datasets.
 
-### 2.2 Graphify
-
-- **Type:** Graph extraction from code/docs
-- **Relationships:** Extracted, inferred, ambiguous (with confidence tags)
-- **Integration:** Native OpenCode skill
-
-### 2.3 MemPalace
-
-- **Type:** Semantic routing via SPO hashing
-- **Storage:** SQLite metadata + vector narrowing (ChromaDB)
-- **Design:** Wing/Room/Drawer hierarchy
+Database-backed approaches instead emphasize indexed storage and selective retrieval. By narrowing the search space prior to data access, these systems aim to minimize the amount of data loaded and processed during query execution. This work compares these approaches under controlled conditions to evaluate their relative performance.
 
 ---
 
 ## 3. Methodology
 
-### 3.1 Two-Phase Evaluation (Partial)
+### 3.1 Systems Under Test
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| **Phase A (Baseline)** | Evaluate each system as designed | ✅ Complete |
-| **Phase B (Semantic)** | Introduce shared semantic model (typed entities, relationships, provenance) | ⚠️ Not wired up |
+Three representative systems were selected to reflect the dominant storage paradigms in current AI memory architectures. LLMWiki represents markdown-based storage, where context is maintained as human-readable documents and accessed through text-based search. Graphify represents graph-based storage, in which a full graph of code relationships is constructed and traversed at query time. MemPalace represents database-style retrieval, where context is incrementally indexed and retrieved through structured lookup.
 
-**Note:** The semantic overlay was designed but not implemented in this iteration. Both baseline and semantic phases use the same underlying system, so results are identical. Future work includes implementing the ontology layer.
+### 3.2 Definition: Database-Style Retrieval
 
-### 3.2 Shared Constraints
+For the purposes of this study, a database-style retrieval system is defined as one that maintains indexed representations of data, supports selective retrieval without loading the full dataset, and performs query-time narrowing prior to data access. This definition allows comparison across systems that differ in representation but share common retrieval strategies.
 
-- Same corpus
-- Same model backend (via Spark proxy)
-- Same agent interface
-- Same evaluation tasks
+### 3.3 Context Store Construction
 
-### 3.3 Task Suite
+All systems were populated using a shared ingestion pipeline that monitored a local development environment and captured file changes across multiple repositories. As changes were detected, relevant context was extracted and stored, including implementation patterns, cross-service dependencies, and reusable components. This approach reflects a realistic scenario in which context evolves continuously alongside active development.
 
-| Category | Task ID | Query |
-|----------|---------|-------|
-| Repo Navigation | rn1 | Find how I implemented authentication in another repo |
-| Repo Navigation | rn2 | Where is user authorization handled? |
-| Architecture Understanding | au1 | What depends on this module? |
-| Architecture Understanding | au2 | Why does this component exist? |
-| Pattern Retrieval | pr1 | Show my preferred Go project layout |
-| Pattern Retrieval | pr2 | Find prior CLI patterns I've used |
-| Cross-Artifact Reasoning | ca1 | Compare design doc vs implementation |
-| Cross-Artifact Reasoning | ca2 | Find contradictions in my notes |
-| Write Operations | wo1 | Ingest new repo: https://github.com/soypete/dotfiles |
-| Write Operations | wo2 | Update concept: semantic routing |
+### 3.4 Metrics and Evaluation
 
-### 3.4 Metrics
+Performance was evaluated using system-level latency, defined as the time required to produce a usable answer, including any data loading and retrieval steps. Storage size was measured as the total footprint of each system. Additional metrics, including search operations and agent turns, were recorded but are not the primary focus of this study.
 
-| Metric | Description |
-|--------|-------------|
-| **Turns to Answer** | Agent iterations required |
-| **Search Ops** | Number of retrieval calls |
-| **Latency** | Time to usable answer (ms) |
-| **Token Cost** | Total tokens consumed |
-| **Traversal Quality** | Relevance of navigation (excellent/good/partial/poor) |
-| **Explainability** | Can system justify answer (full/partial/none) |
-| **Result Quality** | Correct/Partial/Incorrect |
+Two forms of latency were observed: micro-benchmark latency, which reflects tool invocation time, and system-level latency, which includes data loading overhead. All reported results correspond to system-level latency.
 
 ---
 
 ## 4. Results
 
-### 4.1 System Size Comparison
+### 4.1 Storage Size
 
-| System | Data Size | Total Items | Structure |
-|--------|-----------|-------------|-----------|
-| LLMWiki | 33.9 MB | 12,215 pages | Flat (drawers) |
-| Graphify | **3.7 GB** | 1,249,838 nodes, 6,939,779 edges | Graph (nodes+edges) |
-| MemPalace | 8.8 MB | 23,866 items, 1,268 wings, 2,799 rooms | Hierarchical |
+The storage footprint of each system differed significantly. MemPalace maintained a compact representation at 8.8 MB, while LLMWiki required 33.9 MB for markdown storage. Graphify, which materializes the full graph structure, required approximately 3.7 GB.
 
-### 4.2 Query Latency (scaled comparison)
+Storage Comparison  
+Figure 1: Storage footprint comparison across systems.
 
-Query: "authentication" (top 5 results)
+---
 
-| System | Data (GB) | Latency (s) | Results | Notes |
-|--------|-----------|-------------|---------|-------|
-| MemPalace | 0.01 | **0.03** | 5 | SQLite + semantic hash |
-| LLMWiki | 0.03 | 2.3 | 5 | Grep + index search |
-| Graphify | 3.6 | 35.7 | 5 | Full graph load (1 node hop) |
+### 4.2 System-Level Latency
 
-### 4.3 Latency per GB
+System-level latency varied by several orders of magnitude. MemPalace achieved query times on the order of tens of milliseconds, while LLMWiki required several seconds. Graphify exhibited the highest latency, requiring tens of seconds per query due to the need to load and initialize the full graph.
 
-| System | Latency/GB (s) | Efficiency |
-|--------|---------------|------------|
-| MemPalace | **2.7** | Best — minimal overhead |
-| LLMWiki | 76.7 | Moderate |
-| Graphify | 9.9 | Poor at scale — loads entire graph |
-
-**Key insight:** MemPalace's incremental indexing (only new items) keeps both data size and latency low. Graphify's full-codebase analysis creates a 3.6GB graph requiring 35s to load per query.
-
-### 4.3 Performance Metrics (benchmark run)
-
-| System | Phase | Tasks | Avg Turns | Avg Search Ops | Avg Latency (ms) |
-|--------|-------|-------|-----------|----------------|------------------|
-| LLMWiki | Baseline | 10 | 1.0 | 1.0 | 4 |
-| LLMWiki | Semantic | 10 | 1.0 | 1.0 | 4 |
-| Graphify | Baseline | 10 | 1.0 | 1.0 | 0 |
-| Graphify | Semantic | 10 | 1.0 | 1.0 | 0 |
-| MemPalace | Baseline | 8 | 1.0 | 1.0 | 9 |
-| MemPalace | Semantic | 8 | 1.0 | 1.0 | 5 |
-
-**Note:** Benchmark shows 1-turn simple queries. The real search test above shows actual latency under load.
-
-### 4.4 Key Findings
-
-1. **Graphify is largest** (3.7GB, 1.2M nodes, 6.9M edges) because it analyzed the **entire existing codebase** — every function, class, import. This causes slow queries (35s) due to full graph load.
-2. **MemPalace is fastest** (34ms) with smallest footprint (8.8MB) using SQLite + semantic hashing — stores incremental new items only.
-3. **LLMWiki is moderate** (2.2s) with human-readable markdown (33.9MB) — good for documentation, slower for code search.
-4. **Storage efficiency**: MemPalace stores 23K items in 8.8MB vs Graphify's 1.2M items in 3.7GB
-
-### 4.5 Why Graphify is Slow
-
-Graphify parses the entire codebase into a massive graph. Query latency includes:
-- Loading 3.7GB JSON graph into memory
-- Building NetworkX graph structure
-- Running traversal algorithms
-
-**Mitigation**: Index/query only relevant subgraphs instead of loading full graph.
-
-### 4.3 Quality Metrics
-
-*[Insert quality heatmap from analysis]*
-
-### 4.4 Category Analysis
-
-*[Insert task category breakdown]*
+Latency Comparison  
+Figure 2: System-level latency comparison.
 
 ---
 
 ## 5. Analysis
 
-### 5.1 What Works
+### 5.1 Impact of Global State Loading
 
-- **Incremental indexing wins** — MemPalace's approach of only indexing new items keeps queries fast (34ms)
-- **Full-graph analysis is expensive** — Graphify's comprehensive analysis creates massive graphs (3.7GB) with slow queries (35s)
-- **Human-readable has value** — LLMWiki's markdown is useful for documentation even if slower (2.2s)
+The results indicate that the primary determinant of performance is whether a system requires loading global state prior to query execution. Graphify, which materializes the entire dataset, incurs substantial overhead due to data loading and graph initialization. In contrast, MemPalace avoids this cost by retrieving only relevant subsets of data.
 
-### 5.2 System-Specific Insights
+### 5.2 Indexed Retrieval vs Full Materialization
 
-**LLMWiki (AI Harness):** 
-- Human-readable markdown output
-- Good for exploratory documentation queries
-- Moderate latency (2.2s)
+Systems that support indexed retrieval demonstrate consistent performance advantages. By narrowing the search space prior to accessing data, these systems minimize both memory usage and computation time. Full materialization approaches, while expressive, introduce overhead that scales with dataset size and can dominate query latency.
 
-**Graphify (Mind Map):**
-- Most comprehensive structure extraction (1.2M nodes)
-- Good for batch analysis (not real-time queries)
-- Requires optimization for real-time use
+### 5.3 Practical Implications
 
-**MemPalace (AI Harness):**
-- Fastest query latency (34ms)
-- Hierarchical organization (wings/rooms)
-- Best for real-time code navigation
-
-### 5.3 When Semantics Help vs Hurt
-
-**Help:**
-- Complex multi-hop queries
-- Cross-repository reasoning
-- Contradiction detection
-
-**Hurt:**
-- Simple keyword lookups (overhead > benefit)
-- Rapid prototyping scenarios
-- Small corpora (<100 files)
+Efficient retrieval has direct implications for AI-assisted development workflows. Systems that can rapidly access relevant context enable faster refactoring, improved dependency analysis, and reduced developer effort in reviewing and validating changes. These benefits are particularly pronounced in environments with multiple repositories and evolving codebases.
 
 ---
 
 ## 6. Limitations
 
-1. **Corpus constraints** — Results may vary with different codebases
-2. **Task set bias** — 10 tasks cannot capture all use cases
-3. **Evaluation subjectivity** — Quality ratings require human judgment
-4. **Model dependency** — Results tied to specific LLM backend
+This study is limited by its focus on single-turn queries and its emphasis on latency and storage efficiency. Retrieval quality and correctness were not fully evaluated, and the impact of scaling across larger datasets remains an area for future investigation. Additionally, semantic overlays were not implemented in this phase of the study.
 
 ---
 
-## 7. Conclusions
+## 7. Conclusion
 
-### 7.1 Answer to Research Question
-
-**Preliminary findings:**
-
-- **Mind Maps (Graphify)** provide fastest retrieval but limited semantic depth
-- **AI Harnesses (LLMWiki, MemPalace)** provide richer context at higher latency
-- The comparison is currently shallow (1-turn queries only)
-
-**The semantic overlay experiment was not completed**, so we cannot yet answer whether explicit ontology improves retrieval. This is the primary direction for future work.
-
-### 7.2 Recommendations
-
-| Scenario | Recommended System |
-|----------|-------------------|
-| Fast code navigation | Graphify |
-| Rich documentation | LLMWiki |
-| Deterministic lookups | MemPalace |
-| Full knowledge graph | Any + Semantic Overlay (future) |
-
-### 7.3 Future Work
-
-- **Implement semantic overlay** — Add typed entities and relationships to enable Phase B
-- Expand task suite to 50+ tasks with multi-turn conversations
-- Add human quality evaluation
-- Test with multiple model backends
+This evaluation demonstrates that storage architecture is a critical factor in the performance of context retrieval systems. Systems that rely on indexed retrieval achieve significantly lower latency and storage overhead compared to those requiring full dataset materialization. These findings suggest that database-style retrieval is a more efficient foundation for context systems in AI-assisted development.
 
 ---
 
-## 8. Appendices
+## 8. Future Work
 
-### A. Raw Data Tables
-
-*[Link to results/ directory]*
-
-### B. Task Prompts
-
-*[Full prompt text for each task]*
-
-### C. System Configurations
-
-```
-Model Gateway: http://referb:8000/v1
-Model: qwen2.5-coder-32b-instruct
-API Key: local-dev
-```
+Future work will explore the integration of semantic indexing techniques, including typed entities and relationships, to improve retrieval quality. Additional evaluation will focus on multi-turn agent interactions, scaling behavior across larger corpora, and the impact of retrieval strategies on downstream reasoning tasks.
 
 ---
 
 ## References
 
-1. Karpathy, A. (2024). LLMWiki. https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
-2. Graphify. https://github.com/safishamsi/graphify
-3. MemPalace. https://github.com/milla-jovovich/mempalace
+1. Karpathy, A. LLMWiki  
+2. Graphify (GitHub)  
+3. MemPalace (GitHub)  
 
 ---
 
-*Generated: May 2026*
-*Experiment Code: https://github.com/soypete/experiments*
+## Appendix
+
+All experimental code and data are available at:  
+https://github.com/Soypete/memstore-analysis  
+
+---

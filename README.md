@@ -1,92 +1,32 @@
-# experiments
+# Documentation
 
-Living lab notebook for testing: **Do Semantic Models Turn File-Based Systems into Knowledge Graphs?**
+## TL;DR
 
----
+This repository contains an experiment evaluating three storage architectures for context retrieval in AI coding assistants: LLMWiki (markdown-based), Graphify (graph-based), and MemPalace (database-style indexed retrieval). The study measures storage size and query latency to determine which architecture performs best for AI-assisted development workflows.
+
+**Key Finding**: Database-style indexed retrieval (MemPalace) achieves millisecond-level latency with megabyte-scale storage, significantly outperforming full graph materialization approaches that require second-level latency and gigabyte-scale storage.
+
+## Repository Navigation
+
+```
+experiments/
+├── whitepaper.md          # Full whitepaper with complete analysis
+├── docs/
+│   ├── README.md          # This file
+│   └── figures/           # Charts and visualizations
+├── experiment/            # Experiment configuration and logs
+├── analysis/              # Analysis scripts and raw data
+├── results/               # Collected metrics from system tests
+│   ├── llmwiki/           # LLMWiki system results
+│   ├── graphify/          # Graphify system results
+│   └── mempalace/         # MemPalace system results
+├── systems/               # System implementations
+├── corpus/                # Test corpus specification
+└── interfaces/            # Shared agent contract
+```
 
 ## Quick Links
 
-| Section | Description |
-|---------|-------------|
-| [EXPERIMENT_PLAN.md](./EXPERIMENT_PLAN.md) | Full experiment design |
-| [corpus/](./corpus/) | Test corpus specification |
-| [interfaces/](./interfaces/) | Shared agent contract |
-| [logs/](./logs/) | Experiment log entries |
-| [results/](./results/) | Collected metrics |
-
-OpenCode skills for these systems (`/graphify`, `/llmwiki`, `/mempalace`) live in [soypete/dotfiles → opencode/skills](https://github.com/soypete/dotfiles/tree/main/opencode/skills). See [HOW_TO_WRITE_SKILLS.md](https://github.com/soypete/dotfiles/blob/main/opencode/skills/HOW_TO_WRITE_SKILLS.md) for adding your own.
-
----
-
-## Systems Under Test
-
-| System | Description | Link |
-|--------|-------------|------|
-| **LLMWiki** | Markdown-based persistent wiki | [Karpathy gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), view in Obsidian |
-| **Graphify** | Graph extraction from code/docs | [safishamsi/graphify](https://github.com/safishamsi/graphify) |
-| **MemPalace** | Semantic routing via SPO hashing | [mempalace](./systems/mempalace/) |
-
----
-
-## Current Phase
-
-**Status**: `deployment` — Setting up external dependencies
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for installation instructions.
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Experiment Runner                         │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
-│  │ LLMWiki     │  │ Graphify    │  │ MemPalace   │          │
-│  │ Adapter     │  │ Adapter     │  │ Adapter     │          │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘          │
-│         │                │                │                  │
-│         └────────────────┼────────────────┘                  │
-│                          ▼                                   │
-│              ┌─────────────────────┐                         │
-│              │   Agent Contract    │                         │
-│              │  (shared interface) │                         │
-│              └─────────────────────┘                         │
-│                          │                                   │
-│         ┌────────────────┼────────────────┐                 │
-│         ▼                ▼                ▼                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │   Model     │  │   Corpus    │  │   Storage   │         │
-│  │  Gateway    │  │   (shared)  │  │  (homelab)  │         │
-│  │ (Spark)     │  │             │  │             │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Storage Architecture (Homelab)
-
-See [HOMELAB.md](./HOMELAB.md) for detailed storage plan.
-
-- **Longhorn** block storage for persistent state
-- **SeaweedFS** object storage for large artifacts (graphs, transcripts)
-- **Model Gateway** via Spark proxy (OpenAI-compatible API)
-
----
-
-## Getting Started
-
-1. Clone this repo
-2. Review [EXPERIMENT_PLAN.md](./EXPERIMENT_PLAN.md)
-3. Define your test corpus in `corpus/`
-4. Begin Phase A (baseline testing)
-
----
-
-## Contributing
-
-- Use conventional commits (`fix:`, `feat:`, `docs:`)
-- Log experiments in `logs/` using the template
-- Add results to `results/`
+- [Whitepaper](./whitepaper.md) - Full paper with methodology and results
+- [Results](../results/) - Raw experimental data
+- [Systems](../systems/) - Implementation code for each system
